@@ -1,0 +1,37 @@
+//
+// protoc --go_out=plugins=grpc:. counter.proto
+//
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "lekovr.exam.counter";
+option java_outer_classname = "CounterProto";
+
+package count;
+
+import "google/protobuf/empty.proto";
+
+// The count service definition
+service Counter {
+  // Works with counter
+  rpc GetNumber (google.protobuf.Empty) returns (Value) {}
+  rpc IncrementNumber (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc SetSettings (SettingsRequest) returns (SettingsReply) {}
+}
+
+// Counter value
+message Value {
+  int64 value = 1;
+}
+// Settings to change
+message SettingsRequest {
+  int64 step = 1;
+  int64 limit = 2;
+}
+
+// The response message containing settings change status
+message SettingsReply {
+  int32 code = 1;
+  string message = 2;
+}
