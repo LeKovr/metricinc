@@ -15,14 +15,14 @@ import "google/protobuf/empty.proto";
 // The count service definition
 service Counter {
   // Works with counter
-  rpc GetNumber (google.protobuf.Empty) returns (Value) {}
+  rpc GetNumber (google.protobuf.Empty) returns (Number) {}
   rpc IncrementNumber (google.protobuf.Empty) returns (google.protobuf.Empty) {}
   rpc SetSettings (SettingsRequest) returns (SettingsReply) {}
 }
 
 // Counter value
-message Value {
-  int64 value = 1;
+message Number {
+  int64 number = 1;
 }
 // Settings to change
 message SettingsRequest {
