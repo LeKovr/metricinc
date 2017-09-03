@@ -3,15 +3,16 @@ package boltdb
 import (
 	"encoding/binary"
 	"errors"
-	"log"
 
 	"github.com/boltdb/bolt"
 	"github.com/gogo/protobuf/proto"
-	pb "lekovr/exam/counter"
-	"lekovr/exam/lib/struct/server"
+	pb "lekovr/exam/lib/proto/counter"
+	"lekovr/exam/lib/struct/logger"
+	"lekovr/exam/counter/setup"
 )
 
 type Config struct {
+	File        string `long:"db_file" default:"base.db" description:"Bolt database file"`
 	NumberKey   string `long:"db_number_key" default:"number" description:"Show verbose debug information"`
 	SettingsKey string `long:"db_settings_key" default:"config" description:"Show verbose debug information"`
 	Bucket      string `long:"db_bucket" default:"counter" description:"Show verbose debug information"`
@@ -22,21 +23,23 @@ type Store struct {
 	NumberKey   []byte
 	SettingsKey []byte
 	db          *bolt.DB
+	log         logger.Entry
 }
 
-func Open(cfg Config, file string) (*Store, error) {
+func NewStore(log logger.Entry, cfg Config) (*Store, error) {
 
-	db, err := bolt.Open(file, 0644, nil)
+	db, err := bolt.Open(cfg.File, 0644, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Got config: %+v", cfg)
+	log.Debugf("Got config: %+v", cfg)
 	s := Store{
 		Bucket:      []byte(cfg.Bucket),
 		NumberKey:   []byte(cfg.NumberKey),
 		SettingsKey: []byte(cfg.SettingsKey),
 		db:          db,
+		log:         log,
 	}
 	return &s, nil
 
@@ -50,14 +53,14 @@ func (s *Store) Close() error {
 }
 
 // MarshalDial encodes a dial to binary format.
-func MarshalSettings(sr *server.Settings) ([]byte, error) {
+func MarshalSettings(sr *setup.Settings) ([]byte, error) {
 	return proto.Marshal(&pb.SettingsRequest{
 		Step:  *proto.Int64(int64(sr.Step)),
 		Limit: *proto.Int64(int64(sr.Limit)),
 	})
 }
 
-func UnmarshalSettings(data []byte, d *server.Settings) error {
+func UnmarshalSettings(data []byte, d *setup.Settings) error {
 	var buf pb.SettingsRequest
 	if err := proto.Unmarshal(data, &buf); err != nil {
 		return err
@@ -69,26 +72,35 @@ func UnmarshalSettings(data []byte, d *server.Settings) error {
 	return nil
 }
 
-func (s *Store) GetSettings() (*server.Settings, error) {
+func (s *Store) GetSettings() (*setup.Settings, error) {
 
-	sets := server.Settings{}
+	var sets *setup.Settings
 	err := s.db.View(func(tx *bolt.Tx) error {
 
 		if b := tx.Bucket(s.Bucket); b == nil { // no such bucket
+			s.log.Debugf("Bucket does not exists")
 			return nil
 		} else {
 			if v := b.Get(s.SettingsKey); v == nil {
+				s.log.Debugf("Settings data does not exists")
 				return nil
-			} else if err := UnmarshalSettings(v, &sets); err != nil {
-				return err
+			} else {
+				// не закрываем if, чтобы иметь доступ к v
+				loaded := setup.Settings{}
+				if err := UnmarshalSettings(v, &loaded); err != nil {
+					s.log.Debugf("Error unmarshalling settings data: %+v", err)
+					return err
+				}
+				sets = &loaded
 			}
+			// No error. sets loaded
 			return nil
 		}
 	})
-	return &sets, err
+	return sets, err
 }
 
-func (s *Store) SetSettings(sets *server.Settings) error {
+func (s *Store) SetSettings(sets *setup.Settings) error {
 
 	err := s.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(s.Bucket))
@@ -138,10 +150,10 @@ func (s *Store) GetNumber() (*int64, error) {
 }
 
 func (s *Store) SetNumber(number *int64) error {
-	log.Printf("SetNumber: %d", *number)
+	s.log.Debugf("SetNumber: %d", *number)
 
 	err := s.db.Update(func(tx *bolt.Tx) error {
-		log.Printf("Open bucket %s for %d", string(s.Bucket), *number)
+		s.log.Debugf("Open bucket %s for %d", string(s.Bucket), *number)
 		bucket, err := tx.CreateBucketIfNotExists(s.Bucket)
 		if err != nil {
 			return err
