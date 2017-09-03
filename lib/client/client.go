@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "lekovr/exam/counter"
+	pb "lekovr/exam/lib/proto/counter"
 )
 
 type Count struct {

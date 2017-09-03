@@ -1,4 +1,4 @@
-package server
+package setup
 
 // Settings to change
 type Settings struct {

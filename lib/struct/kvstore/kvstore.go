@@ -1,22 +1,15 @@
 package kvstore
 
 import (
-	"lekovr/exam/lib/struct/server"
+	"lekovr/exam/counter/setup"
 )
 
 type Store interface {
 	// Works with KV store
 
-	//	Open(cfg interface{}, file string) (Store, error)
 	Close() error
-	GetSettings() (*server.Settings, error)
-	SetSettings(sets *server.Settings) error
+	GetSettings() (*setup.Settings, error)
+	SetSettings(sets *setup.Settings) error
 	GetNumber() (*int64, error)
 	SetNumber(number *int64) error
 }
-
-var (
-// ErrDatabaseNotOpen is returned when a DB instance is accessed before it
-// is opened or after it is closed.
-//ErrSettingsEmpty = errors.New("settingsdatabase not open")
-)
