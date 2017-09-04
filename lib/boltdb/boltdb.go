@@ -6,16 +6,16 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/gogo/protobuf/proto"
-	pb "lekovr/exam/lib/proto/counter"
-	"lekovr/exam/lib/struct/logger"
 	"lekovr/exam/counter/setup"
+	pb "lekovr/exam/lib/proto/counter"
+	"lekovr/exam/lib/iface/logger"
 )
 
 type Config struct {
 	File        string `long:"db_file" default:"base.db" description:"Bolt database file"`
-	NumberKey   string `long:"db_number_key" default:"number" description:"Show verbose debug information"`
-	SettingsKey string `long:"db_settings_key" default:"config" description:"Show verbose debug information"`
-	Bucket      string `long:"db_bucket" default:"counter" description:"Show verbose debug information"`
+	Bucket      string `long:"db_bucket" default:"counter" description:"Bucket name"`
+	NumberKey   string `long:"db_number_key" default:"number" description:"Key name for current number"`
+	SettingsKey string `long:"db_settings_key" default:"config" description:"Key name for settings data"`
 }
 
 type Store struct {
@@ -33,7 +33,7 @@ func NewStore(log logger.Entry, cfg Config) (*Store, error) {
 		return nil, err
 	}
 
-	log.Debugf("Got config: %+v", cfg)
+	log.WithField("config", cfg).Debug("Create store")
 	s := Store{
 		Bucket:      []byte(cfg.Bucket),
 		NumberKey:   []byte(cfg.NumberKey),
@@ -54,14 +54,14 @@ func (s *Store) Close() error {
 
 // MarshalDial encodes a dial to binary format.
 func MarshalSettings(sr *setup.Settings) ([]byte, error) {
-	return proto.Marshal(&pb.SettingsRequest{
+	return proto.Marshal(&pb.Settings{
 		Step:  *proto.Int64(int64(sr.Step)),
 		Limit: *proto.Int64(int64(sr.Limit)),
 	})
 }
 
 func UnmarshalSettings(data []byte, d *setup.Settings) error {
-	var buf pb.SettingsRequest
+	var buf pb.Settings
 	if err := proto.Unmarshal(data, &buf); err != nil {
 		return err
 	}
@@ -103,7 +103,9 @@ func (s *Store) GetSettings() (*setup.Settings, error) {
 func (s *Store) SetSettings(sets *setup.Settings) error {
 
 	err := s.db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(s.Bucket))
+		s.log.WithField("bucket", string(s.Bucket)).WithField("settings", *sets).Debug("Open bucket for settings")
+
+		bucket, err := tx.CreateBucketIfNotExists(s.Bucket)
 		if err != nil {
 			return err
 		}
@@ -150,10 +152,9 @@ func (s *Store) GetNumber() (*int64, error) {
 }
 
 func (s *Store) SetNumber(number *int64) error {
-	s.log.Debugf("SetNumber: %d", *number)
 
 	err := s.db.Update(func(tx *bolt.Tx) error {
-		s.log.Debugf("Open bucket %s for %d", string(s.Bucket), *number)
+		s.log.WithField("bucket", string(s.Bucket)).WithField("number", *number).Debug("Open bucket for number")
 		bucket, err := tx.CreateBucketIfNotExists(s.Bucket)
 		if err != nil {
 			return err

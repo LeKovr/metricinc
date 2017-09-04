@@ -1,8 +1,6 @@
 package client
 
 import (
-	"log"
-
 	"google.golang.org/grpc"
 
 	pb "lekovr/exam/lib/proto/counter"
@@ -19,7 +17,7 @@ func NewServer(address string) (*Count, error) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		return nil, err
 	}
 	c.conn = conn
 	c.Service = pb.NewCounterClient(conn)

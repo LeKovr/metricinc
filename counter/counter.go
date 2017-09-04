@@ -9,8 +9,8 @@ import (
 
 type Counter struct {
 	number   int64
-	settings setup.Settings // tсли это будет ссылка, кто-то кроме нас сможет менять значения
-	mutex    sync.RWMutex
+	settings setup.Settings
+	mutex    sync.RWMutex // не указатель, т.к. всегда должен быть инициализирован
 }
 
 func NewCounter(s setup.Settings, number int64) (*Counter, error) {
@@ -32,11 +32,13 @@ func (c *Counter) IncrementNumber() (int64, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if c.number > (c.settings.Limit - c.settings.Step) {
+	// number + step == limit ? number = 0
+	// number + step >  limit ?	number = number + step - limit = number - (limit - step)
+	if c.number >= (c.settings.Limit - c.settings.Step) {
 		// переход счетчика через границу
 		// делаем за две операции, чтобы не выйти за разрядность
-		rest := c.settings.Limit - c.number
-		c.number = c.settings.Step - rest
+		rest := c.settings.Limit - c.settings.Step
+		c.number -= rest
 	} else {
 		c.number += c.settings.Step
 	}

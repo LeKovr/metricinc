@@ -1,33 +1,41 @@
 //
-// protoc --go_out=plugins=grpc:. counter.proto
+// https://habrahabr.ru/post/276905/
+// go get github.com/gogo/protobuf/{proto,protoc-gen-gogo}
+//
+// protoc --gogo_out=plugins=grpc:. counter.proto
 //
 
 syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.lekovr.exam.count";
+option java_outer_classname = "Counter";
 
 package counter;
 
 import "google/protobuf/empty.proto";
 
-// The count service definition
+// Counter contains API methods
 service Counter {
-  // Works with counter
+  // GetNumber returns current counter value
   rpc GetNumber (google.protobuf.Empty) returns (Number) {}
+
+  // IncrementNumber increments counter value
   rpc IncrementNumber (google.protobuf.Empty) returns (google.protobuf.Empty) {}
-  rpc SetSettings (SettingsRequest) returns (SettingsReply) {}
+
+  // SetSettings stores new settings
+  rpc SetSettings (Settings) returns (google.protobuf.Empty) {}
+
+  // GetSettings returns current settings
+  rpc GetSettings (google.protobuf.Empty) returns (Settings) {}
 }
 
-// Counter value
+// Number contains counter value
 message Number {
   int64 number = 1;
 }
 // Settings to change
-message SettingsRequest {
+message Settings {
   int64 step = 1;
   int64 limit = 2;
-}
-
-// The response message containing settings change status
-message SettingsReply {
-  int32 code = 1;
-  string message = 2;
 }
