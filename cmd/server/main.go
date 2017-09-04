@@ -3,24 +3,23 @@ package main
 import (
 	"net"
 
-	"google.golang.org/grpc"
-	//	"google.golang.org/grpc/reflection"
 	"github.com/jessevdk/go-flags"
+	"google.golang.org/grpc"
 
-	pb "lekovr/exam/lib/proto/counter"
 	"lekovr/exam/lib/boltdb"
+	"lekovr/exam/lib/grpcapi"
 	"lekovr/exam/lib/logger"
-	"lekovr/exam/lib/server"
+	pb "lekovr/exam/lib/proto/counter"
 
-	logiface "lekovr/exam/lib/struct/logger"
+	logiface "lekovr/exam/lib/iface/logger"
 )
 
 type Config struct {
-	Listen string `long:"listen" default:":50051" description:""`
+	Listen string `long:"listen" default:":50051" description:"Addr and port which server listens"`
 
-	Logger logger.Config
-	Server server.Config
-	Store  boltdb.Config
+	Logger logger.Config  `group:"Logging Options"`
+	API    grpcapi.Config `group:"API Options"`
+	Store  boltdb.Config  `group:"Storage Options"`
 }
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 
 	_, err := flags.Parse(&cfg)
 	if err != nil {
-		panic("Parse options error") // error message written already
+		panic("Program aborted" + err.Error()) // error message written already
 	}
 
 	log, err := logger.NewLogger(cfg.Logger)
@@ -39,21 +38,21 @@ func main() {
 
 	log.Infof("Counter server v%s", Version)
 
+	log.WithField("addr", cfg.Listen).Debug("Create listener")
 	lis, err := net.Listen("tcp", cfg.Listen)
-	stopOnError(log, err, "listen socket")
+	stopOnError(log, err, "Listen socket")
 
 	store, err := boltdb.NewStore(log, cfg.Store)
-	stopOnError(log, err, "db connect")
-	srv, err := server.NewServer(log, store, cfg.Server)
-	stopOnError(log, err, "service create")
-	defer srv.Close()
+	stopOnError(log, err, "DB connect")
+
+	api, err := grpcapi.NewAPI(log, store, cfg.API)
+	stopOnError(log, err, "Service create")
+	defer api.Close()
 
 	s := grpc.NewServer()
-	pb.RegisterCounterServer(s, srv)
-	// Register reflection service on gRPC server.
-	//	reflection.Register(s)
+	pb.RegisterCounterServer(s, api)
 	if err := s.Serve(lis); err != nil {
-		panic("Service init error: " + err.Error())
+		panic("Server init error: " + err.Error())
 	}
 }
 
