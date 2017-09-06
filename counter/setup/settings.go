@@ -1,4 +1,4 @@
-// Package setup contains counter settings struct
+// Package setup contains counter settings struct only
 package setup
 
 // Settings struct holds counter settings

@@ -34,14 +34,17 @@ func NewAPI(log logger.Entry, store kvstore.Store, cfg Config) (*CounterService,
 
 	log.WithField("config", cfg).Debug("Create API")
 
+	newSettings := false
+	newNumber := false
+
 	// Get settings from db or use defaults from cfg
 	sets, err := store.GetSettings()
 	if err != nil {
 		return nil, err
 	} else if sets == nil {
 		sets = &setup.Settings{Step: cfg.Step, Limit: cfg.Limit}
+		newSettings = true
 		log.WithField("settings", *sets).Debug("Load Settings from opts")
-		store.SetSettings(sets)
 	} else {
 		log.WithField("settings", *sets).Debug("Load Settings from db")
 	}
@@ -52,18 +55,24 @@ func NewAPI(log logger.Entry, store kvstore.Store, cfg Config) (*CounterService,
 		return nil, err
 	} else if number == nil {
 		number = &cfg.Number
+		newNumber = true
 		log.WithField("number", *number).Debug("Load Number from opts")
-		store.SetNumber(number)
 	} else {
 		log.WithField("number", *number).Debug("Load Number from db")
 	}
 
 	// Create counter
-	c, err := app.NewCounter(*sets, *number)
+	c, err := app.NewCounter(sets, *number)
 	if err != nil {
 		return nil, err
 	}
-
+	// All data ready, store if new
+	if newSettings {
+		store.SetSettings(sets)
+	}
+	if newNumber {
+		store.SetNumber(number)
+	}
 	service := CounterService{counter: c, store: store, log: log, storeStrict: cfg.StrictStoreErrors}
 	log.Info("API created")
 	return &service, nil
@@ -88,14 +97,14 @@ func (s *CounterService) SetSettings(ctx context.Context, in *pb.Settings) (*emp
 	sets := setup.Settings{Step: in.Step, Limit: in.Limit}
 	s.log.WithField("settings", sets).Debug("SetSettings")
 
-	// Set counter
-	err := s.counter.SetSettings(sets)
+	// Set in counter
+	err := s.counter.SetSettings(&sets)
 	if err != nil {
 		s.log.WithField("settings", sets).Warnf("Settings set error: %+v", err)
 		return &empty.Empty{}, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	// Set store
+	// Set in store
 	err = s.store.SetSettings(&sets)
 	if err != nil {
 		s.log.WithField("settings", sets).Warnf("Settings store error: %+v", err)
@@ -115,15 +124,15 @@ func (s *CounterService) GetNumber(ctx context.Context, in *empty.Empty) (*pb.Nu
 		return &pbn, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	pbn.Number = number
-	s.log.WithField("number", number).Debug("GetNumber")
+	pbn.Number = *number
+	s.log.WithField("number", *number).Debug("GetNumber")
 	return &pbn, err
 }
 
 // IncrementNumber increments counter and stores new number in database
 func (s *CounterService) IncrementNumber(ctx context.Context, in *empty.Empty) (*empty.Empty, error) {
 
-	// Set counter
+	// Set in counter
 	number, err := s.counter.IncrementNumber()
 	if err != nil {
 		s.log.WithField("number", number).Warnf("Number inc error: %+v", err)
@@ -132,8 +141,8 @@ func (s *CounterService) IncrementNumber(ctx context.Context, in *empty.Empty) (
 
 	s.log.WithField("number", number).Debug("IncrementNumber")
 
-	// Set store
-	err = s.store.SetNumber(&number)
+	// Set in store
+	err = s.store.SetNumber(number)
 	if err != nil {
 		s.log.WithField("number", number).Warnf("Number store error: %+v", err)
 		if s.storeStrict {
@@ -148,7 +157,7 @@ func (s *CounterService) Close() {
 	if s.store != nil {
 		number, _ := s.counter.GetNumber()
 		sets, _ := s.counter.GetSettings()
-		s.log.WithField("settings", sets).WithField("number", number).Warn("Final state")
+		s.log.WithField("settings", *sets).WithField("number", *number).Warn("Final state")
 		s.store.Close()
 	}
 }

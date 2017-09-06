@@ -2,8 +2,8 @@ version: '2.1'
 
 services:
 
-  counter:
-    image: counter
+  app:
+    image: ${DC_IMAGE}
     command:
       /server --listen :50051 --log_level debug --db_file=${DB_FILE}
     ports:

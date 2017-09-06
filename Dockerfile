@@ -12,6 +12,7 @@ COPY counter counter
 COPY Makefile .
 COPY glide.* ./
 
+RUN go get -u github.com/golang/lint/golint
 RUN make vendor
 RUN make build-standalone
 

@@ -1,48 +1,7 @@
-/*
-Client for gRPC counter service
+// Copyright 2017 Alexey Kovrizhkin <lekovr@gmail.com>. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
 
-Usage
-
-Run from command line:
- client [OPTIONS] <get | inc | set>
-
-Application Options:
-  --connect= Addr and port which server listens (default: :50051)
-
-Help Options:
-  -h, --help     Show help message
-
-Available commands:
-  get  Get current values
-  inc  Increment counter
-  set  Set both counter settings (step and limit) using defaults if not given (see 'set -h')
-
-[set command options]
-  --step=  Increment step (default: 1)
-  --limit= Increment loop limit (default: 100)
-
-Program returns all counter data as json.
-
-Examples
-
-Values from clean new service:
- $ ./client get
- {"number":0,"step":1,"limit":100}
-
-Increment counter:
- $ ./client inc
- {"number":1,"step":1,"limit":100}
-
-Set new step:
- $ ./client set --step 2
- {"number":1,"step":2,"limit":100}
-
-Increment by new step
- $ ./client inc
- {"number":3,"step":2,"limit":100}
-
-
-*/
 package main
 
 import (
@@ -50,10 +9,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jessevdk/go-flags"
-
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jessevdk/go-flags"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	"lekovr/exam/lib/client"
 	ilogger "lekovr/exam/lib/iface/logger"
@@ -61,13 +20,13 @@ import (
 	pb "lekovr/exam/lib/proto/counter"
 )
 
-// GetCommand holds 'get' command defnition
+// GetCommand holds 'get' command definition
 type GetCommand struct{}
 
-// IncCommand holds 'inc' command defnition
+// IncCommand holds 'inc' command definition
 type IncCommand struct{}
 
-// SetCommand holds 'set' command defnition
+// SetCommand holds 'set' command definition
 type SetCommand struct {
 	Step  int64 `long:"step"   default:"1" description:"Increment step"`
 	Limit int64 `long:"limit"  default:"100" description:"Increment loop limit"`
@@ -127,7 +86,7 @@ func main() {
 	os.Exit(0)
 }
 
-// number - connect to gRPC and get current number, if doInc than after increment it
+// number - connect to gRPC and increment counter if doInc = true
 func number(cfg Config, doInc bool) {
 	log, c := open(cfg)
 	defer c.Close()
@@ -152,19 +111,20 @@ func settings(cfg Config, step, limit int64) {
 	show(log, c)
 }
 
+// open - connect to gRPC
 func open(cfg Config) (ilogger.Entry, *client.Count) {
 	log, err := logger.NewLogger(cfg.Logger)
 	if err != nil {
 		panic("Logger init error: " + err.Error())
 	}
-	c, err := client.NewClient(cfg.Connect)
+	c, err := client.NewClient(cfg.Connect, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
 	}
 	return log, c
 }
 
-// show current values of number ans settings as json
+// show current number and settings as json
 func show(log ilogger.Entry, c *client.Count) {
 	n, err := c.Service.GetNumber(context.Background(), &empty.Empty{})
 	if err != nil {

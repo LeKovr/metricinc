@@ -2,40 +2,6 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-/*
-gRPC counter service
-
-This service offers counter methods, described in lib/grpcapi package
-
-Usage
-
-Run from command line:
-
- server [OPTIONS]
-
-Application Options:
- --listen=          Addr and port which server listens (default: :50051)
-
-Logging Options:
- --log_level=       Log level [warn|info|debug] (default: debug)
- --log_stdout       Log to STDOUT without color and timestamps
-
-API Options:
- --init_number=     Initial number (default: 0)
- --init_step=       Increment step (default: 1)
- --init_limit=      Increment loop limit (default: 100)
- --store_strict     Do not ignore store errors
-
-Storage Options:
- --db_file=         Bolt database file (default: base.db)
- --db_bucket=       Bucket name (default: counter)
- --db_number_key=   Key name for current number (default: number)
- --db_settings_key= Key name for settings data (default: config)
-
-Help Options:
- -h, --help         Show help message
-
-*/
 package main
 
 import (
@@ -110,8 +76,8 @@ func main() {
 	go func() {
 		sig := <-signalChannel
 		log.Infof("Got signal: %v", sig)
-		s.GracefulStop()
 		api.Close()
+		s.GracefulStop()
 		os.Exit(0)
 	}()
 

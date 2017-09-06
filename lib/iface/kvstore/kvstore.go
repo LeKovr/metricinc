@@ -7,6 +7,8 @@ Package kvstore defines Store interface.
 */
 package kvstore
 
+//go:generate mockgen -destination=../../mocks/kvstore.go -package=mocks lekovr/exam/lib/iface/kvstore Store
+
 import (
 	"lekovr/exam/counter/setup"
 )

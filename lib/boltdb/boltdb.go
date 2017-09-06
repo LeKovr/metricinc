@@ -35,7 +35,7 @@ type Store struct {
 	log         logger.Entry
 }
 
-// NewStore creates a boltdb object
+// NewStore creates a boltdb object.
 func NewStore(log logger.Entry, cfg Config) (*Store, error) {
 
 	// Open bolt database
@@ -57,7 +57,7 @@ func NewStore(log logger.Entry, cfg Config) (*Store, error) {
 
 }
 
-// GetSettings reads settings from database
+// GetSettings reads settings from database.
 // Bucket: s.Bucket, Field key: s.SettingsKey
 func (s *Store) GetSettings() (*setup.Settings, error) {
 
@@ -90,7 +90,7 @@ func (s *Store) GetSettings() (*setup.Settings, error) {
 	return sets, err
 }
 
-// SetSettings saves settings to database
+// SetSettings saves settings to database.
 // Bucket: s.Bucket, Field key: s.SettingsKey
 func (s *Store) SetSettings(sets *setup.Settings) error {
 
@@ -113,7 +113,7 @@ func (s *Store) SetSettings(sets *setup.Settings) error {
 	return err
 }
 
-// GetNumber reads number from database
+// GetNumber reads number from database.
 // Bucket: s.Bucket, Field key: s.NumberKey
 func (s *Store) GetNumber() (*int64, error) {
 
@@ -146,7 +146,7 @@ func (s *Store) GetNumber() (*int64, error) {
 	return &num, nil
 }
 
-// SetNumber saves number to database
+// SetNumber saves number to database.
 // Bucket: s.Bucket, Field key: s.NumberKey
 func (s *Store) SetNumber(number *int64) error {
 
