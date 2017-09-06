@@ -14,6 +14,7 @@ option java_outer_classname = "Counter";
 package counter;
 
 import "google/protobuf/empty.proto";
+// import "github.com/gogo/protobuf/protobuf/google/protobuf/empty.proto";
 
 // Counter contains API methods
 service Counter {

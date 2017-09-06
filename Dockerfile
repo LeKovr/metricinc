@@ -1,20 +1,27 @@
-FROM golang:latest
+
+ARG golang_version
+
+FROM golang:$golang_version
 
 MAINTAINER Alexey Kovrizhkin <lekovr+docker@gmail.com>
 
-WORKDIR /go/src/app
-COPY . .
+WORKDIR /go/src/lekovr/exam
+COPY cmd cmd
+COPY lib lib
+COPY counter counter
+COPY Makefile .
+COPY glide.* ./
 
-RUN go-wrapper download
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o dbrpc
+RUN make vendor
+RUN make build-standalone
 
 FROM scratch
 
+VOLUME /data
+
 WORKDIR /
-COPY --from=0 /go/src/app/dbrpc .
+COPY --from=0 /go/src/lekovr/exam/client .
+COPY --from=0 /go/src/lekovr/exam/server .
 
-# sql code for db server
-COPY sql/*.sql /opt/sql/
-
-EXPOSE 8080
-ENTRYPOINT ["/dbrpc"]
+EXPOSE 50051
+CMD ["/server"]

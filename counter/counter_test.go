@@ -54,7 +54,6 @@ func TestCounter_GetNumber(t *testing.T) {
 	type fields struct {
 		number   int64
 		settings setup.Settings
-		mutex    sync.RWMutex
 	}
 	tests := []struct {
 		name    string
@@ -65,7 +64,7 @@ func TestCounter_GetNumber(t *testing.T) {
 		// test cases
 		{
 			name:    "start from 1",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 10}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 1, Limit: 10}, number: 1},
 			want:    1,
 			wantErr: false,
 		},
@@ -80,7 +79,7 @@ func TestCounter_GetNumber(t *testing.T) {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    tt.fields.mutex,
+			mutex:    sync.RWMutex{},
 		}
 		got, err := c.GetNumber()
 		if (err != nil) != tt.wantErr {
@@ -97,7 +96,6 @@ func TestCounter_IncrementNumber(t *testing.T) {
 	type fields struct {
 		number   int64
 		settings setup.Settings
-		mutex    sync.RWMutex
 	}
 	tests := []struct {
 		name    string
@@ -108,25 +106,25 @@ func TestCounter_IncrementNumber(t *testing.T) {
 		// test cases
 		{
 			name:    "new number less than limit",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
 			want:    2,
 			wantErr: false,
 		},
 		{
 			name:    "new number eq limit-1",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
 			want:    2,
 			wantErr: false,
 		},
 		{
 			name:    "new number eq limit",
-			fields:  fields{settings: setup.Settings{Step: 2, Limit: 3}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 2, Limit: 3}, number: 1},
 			want:    0,
 			wantErr: false,
 		},
 		{
 			name:    "new greater than limit",
-			fields:  fields{settings: setup.Settings{Step: 3, Limit: 5}, number: 4, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 3, Limit: 5}, number: 4},
 			want:    2,
 			wantErr: false,
 		},
@@ -135,7 +133,7 @@ func TestCounter_IncrementNumber(t *testing.T) {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    tt.fields.mutex,
+			mutex:    sync.RWMutex{},
 		}
 		got, err := c.IncrementNumber()
 		if (err != nil) != tt.wantErr {
@@ -152,7 +150,6 @@ func TestCounter_SetSettings(t *testing.T) {
 	type fields struct {
 		number   int64
 		settings setup.Settings
-		mutex    sync.RWMutex
 	}
 	type args struct {
 		s setup.Settings
@@ -166,13 +163,13 @@ func TestCounter_SetSettings(t *testing.T) {
 		// test cases
 		{
 			name:    "correct settings",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
 			args:    args{s: setup.Settings{Step: 2, Limit: 20}},
 			wantErr: false,
 		},
 		{
 			name:    "incorrect settings",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1, mutex: sync.RWMutex{}},
+			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
 			args:    args{s: setup.Settings{Step: 20, Limit: 2}},
 			wantErr: true,
 		},
@@ -181,7 +178,7 @@ func TestCounter_SetSettings(t *testing.T) {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    tt.fields.mutex,
+			mutex:    sync.RWMutex{},
 		}
 		if err := c.SetSettings(tt.args.s); (err != nil) != tt.wantErr {
 			t.Errorf("%q. Counter.SetSettings() error = %v, wantErr %v", tt.name, err, tt.wantErr)
@@ -197,7 +194,6 @@ func TestCounter_GetSettings(t *testing.T) {
 	type fields struct {
 		number   int64
 		settings setup.Settings
-		mutex    sync.RWMutex
 	}
 	tests := []struct {
 		name    string
@@ -223,7 +219,7 @@ func TestCounter_GetSettings(t *testing.T) {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    tt.fields.mutex,
+			mutex:    sync.RWMutex{},
 		}
 		got, err := c.GetSettings()
 		if (err != nil) != tt.wantErr {

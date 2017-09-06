@@ -1,7 +1,48 @@
+// Copyright 2017 Alexey Kovrizhkin <lekovr@gmail.com>. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
+
+/*
+gRPC counter service
+
+This service offers counter methods, described in lib/grpcapi package
+
+Usage
+
+Run from command line:
+
+ server [OPTIONS]
+
+Application Options:
+ --listen=          Addr and port which server listens (default: :50051)
+
+Logging Options:
+ --log_level=       Log level [warn|info|debug] (default: debug)
+ --log_stdout       Log to STDOUT without color and timestamps
+
+API Options:
+ --init_number=     Initial number (default: 0)
+ --init_step=       Increment step (default: 1)
+ --init_limit=      Increment loop limit (default: 100)
+ --store_strict     Do not ignore store errors
+
+Storage Options:
+ --db_file=         Bolt database file (default: base.db)
+ --db_bucket=       Bucket name (default: counter)
+ --db_number_key=   Key name for current number (default: number)
+ --db_settings_key= Key name for settings data (default: config)
+
+Help Options:
+ -h, --help         Show help message
+
+*/
 package main
 
 import (
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jessevdk/go-flags"
 	"google.golang.org/grpc"
@@ -14,23 +55,30 @@ import (
 	logiface "lekovr/exam/lib/iface/logger"
 )
 
+// Config holds program options
 type Config struct {
-	Listen string `long:"listen" default:":50051" description:"Addr and port which server listens"`
+	Listen string `long:"listen" default:":50051" description:"Addr and port which server listens at"`
 
 	Logger logger.Config  `group:"Logging Options"`
 	API    grpcapi.Config `group:"API Options"`
 	Store  boltdb.Config  `group:"Storage Options"`
 }
 
+// main - program body
 func main() {
 
+	// Parse options
 	var cfg Config
-
 	_, err := flags.Parse(&cfg)
 	if err != nil {
-		panic("Program aborted" + err.Error()) // error message written already
+		if e, ok := err.(*flags.Error); ok && e.Type == flags.ErrHelp {
+			os.Exit(1) // help printed
+		} else {
+			os.Exit(2) // error message written already
+		}
 	}
 
+	// Logger
 	log, err := logger.NewLogger(cfg.Logger)
 	if err != nil {
 		panic("Logger init error: " + err.Error())
@@ -38,27 +86,45 @@ func main() {
 
 	log.Infof("Counter server v%s", Version)
 
+	// Listener
 	log.WithField("addr", cfg.Listen).Debug("Create listener")
 	lis, err := net.Listen("tcp", cfg.Listen)
 	stopOnError(log, err, "Listen socket")
 
+	// Store
 	store, err := boltdb.NewStore(log, cfg.Store)
 	stopOnError(log, err, "DB connect")
 
+	// gRPC API
 	api, err := grpcapi.NewAPI(log, store, cfg.API)
 	stopOnError(log, err, "Service create")
 	defer api.Close()
 
 	s := grpc.NewServer()
 	pb.RegisterCounterServer(s, api)
+
+	// Gracefull shutdown
+	// http://stackoverflow.com/questions/18106749/golang-catch-signals
+	signalChannel := make(chan os.Signal, 2)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-signalChannel
+		log.Infof("Got signal: %v", sig)
+		s.GracefulStop()
+		api.Close()
+		os.Exit(0)
+	}()
+
+	// Serve
 	if err := s.Serve(lis); err != nil {
 		panic("Server init error: " + err.Error())
 	}
 }
 
-func stopOnError(log logiface.Entry, e error, d string) {
-	if e != nil {
-		log.Fatalf("Error with %s: %v", d, e)
+// stopOnError used internally for fatal errors checking
+func stopOnError(log logiface.Entry, err error, info string) {
+	if err != nil {
+		log.Fatalf("Error with %s: %v", info, err)
 	}
 
 }
