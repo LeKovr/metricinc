@@ -29,4 +29,4 @@ ignore:
 - lekovr/exam/lib/iface/logger
 - lekovr/exam/lib/logger
 - lekovr/exam/lib/proto/counter
-- lekovr/exam/lib/mock_kvstore
+- lekovr/exam/lib/mocks

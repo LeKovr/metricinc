@@ -1,7 +1,6 @@
 /*
 Package client is a simple connector to counter gRPC service
 
-
 */
 package client
 
@@ -18,11 +17,11 @@ type Count struct {
 }
 
 // NewClient creates a gRPC connection & service
-func NewClient(address string) (*Count, error) {
+func NewClient(address string, opts ...grpc.DialOption) (*Count, error) {
 
 	c := Count{}
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	conn, err := grpc.Dial(address, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -35,5 +34,7 @@ func NewClient(address string) (*Count, error) {
 
 // Close client connection
 func (c *Count) Close() {
-	c.conn.Close()
+	if c.conn != nil {
+		c.conn.Close()
+	}
 }

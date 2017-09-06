@@ -2,5 +2,7 @@ client
 server
 coverage.out
 vendor
-t/dc-test.sh
+test-docker.get
+test-docker.sh
+base.db
 var

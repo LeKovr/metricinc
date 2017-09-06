@@ -1,75 +1,72 @@
-SHELL      = /bin/bash
+# exam project makefile
+
+SHELL          = /bin/bash
 
 # -----------------------------------------------------------------------------
 # Build config
 
-GO        ?= go
-
+GO            ?= go
 # not supported in BusyBox v1.26.2
-LIBS = $(shell find lib -maxdepth 3 -mindepth 1 -name *.go  -printf '%p\n')
-CMDS = $(shell find lib -maxdepth 1 -mindepth 1 -type d -printf '%f\n')
-SOURCES    = counter/*.go $(LIBS)
+LIB_SOURCES    = $(shell find lib -maxdepth 3 -mindepth 1 -name *.go  -printf '%p\n')
+SOURCES        = counter/*.go $(LIB_SOURCES)
+LIBS           = $(shell $(GO) list ./... | grep -vE '/(vendor|iface|proto|cmd)/')
 
 # -----------------------------------------------------------------------------
 # Docker image config
 
-# application name
+# application name, docker-compose prefix
 PROJECT_NAME  ?= $(shell basename $$PWD)
 
+# Hardcoded in docker-compose.yml service name
+DC_SERVICE    ?= app
+
+# Generated docker image
+DC_IMAGE      ?= counter
+
 # docker/compose version
-DC_VER ?= 1.14.0
+DC_VER        ?= 1.14.0
 
 # golang image version
-GO_VER ?= latest
+GO_VER        ?= latest
 
-DOCKER_BIN ?= docker
+# docker app for change inside containers
+DOCKER_BIN    ?= docker
 
 # -----------------------------------------------------------------------------
 # App config
 
-SERVER_PORT ?= 50051
+# Docker container port
+SERVER_PORT   ?= 50051
+
+# Database file in mounted volume
 DB_FILE ?= /data/counter.db
 
 # -----------------------------------------------------------------------------
 
-.PHONY: pb cov-status cov-html mocks build test lint fmt vet vendor
+.PHONY: all gen doc build-standalone coverage cov-html build test lint fmt vet vendor up down build-docker clean-docker
 
 ##
 ## Available targets are:
 ##
 
 # default: show target list
-all:
-	@grep -A 1 "^##" Makefile | less
+all: help
 
-## Generate protobuf
-pb:
-	$(GO) generate ./lib/proto/...
+## Generate protobuf & kvstore mock
+gen:
+	$(GO) generate ./lib/proto/... ./lib/iface/kvstore/...
 
 doc:
 	@echo "Open http://localhost:6060/pkg/lekovr/exam"
 	@godoc -http=:6060
 
-## Show coverage
-cov-status:
-	for f in counter lib/* ; do [[ $$f == lib/iface ]] || [[ $$f == lib/proto ]] || \
-  { pushd $$f ; $(GO) test -coverprofile=coverage.out ; popd ; } ; done
-
-## Show package coverage in html (make cov-html PKG=counter)
-cov-html:
-	pushd $(PKG) ; go tool cover -html=coverage.out ; popd
-
-## Generate mocks
-mocks: lib/mock_kvstore/mock_kvstore.go
-
-# Install mockgen: go get github.com/golang/mock/mockgen
-lib/mock_kvstore/mock_kvstore.go: lib/iface/kvstore/kvstore.go
-	mockgen -source=lib/iface/kvstore/kvstore.go > $@
-
 ## Build cmds for scratch docker
-build-standalone:
+build-standalone: lint vet coverage
 	CGO_ENABLED=0 GOOS=linux go build -a ./cmd/server
 	CGO_ENABLED=0 GOOS=linux go build -a ./cmd/client
+
+## Build cmds with checks
+build-all: lint vet coverage build
 
 ## Build cmds
 build: client server
@@ -82,23 +79,31 @@ client: cmd/client/*.go $(SOURCES)
 server: cmd/server/*.go $(SOURCES)
 	$(GO) build ./cmd/$@
 
+## Show coverage
+coverage:
+	@for f in $(LIBS) ; do pushd ../../$$f > /dev/null ; $(GO) test -coverprofile=coverage.out ; popd > /dev/null ; done
+
+## Show package coverage in html (make cov-html PKG=counter)
+cov-html:
+	pushd $(PKG) ; $(GO) tool cover -html=coverage.out ; popd
+
 ## Run tests
 test:
-	$(GO) test $$(go list ./... | grep -v /vendor/)
+	$(GO) test $(LIBS)
 
 ## Run lint
 lint:
-	golint lib/... | grep -vE "^lib/(mock|proto)" || true
+	golint lib/... | grep -v "lib/proto" || true
 	golint counter/...
 	golint cmd/...
 
 ## Format go sources
 fmt:
-	$(GO) fmt ./lib/... && go fmt ./counter/... && go fmt ./cmd/...
+	$(GO) fmt ./lib/... && $(GO) fmt ./counter/... && $(GO) fmt ./cmd/...
 
 ## Run vet
 vet:
-	$(GO) vet ./lib/... && go vet ./counter/... && go vet ./cmd/...
+	$(GO) vet ./lib/... && $(GO) vet ./counter/... && $(GO) vet ./cmd/...
 
 ## Install vendor deps
 vendor:
@@ -111,35 +116,57 @@ vendor:
 # Docker part
 # ------------------------------------------------------------------------------
 
+## Start service in container
+up:
+up: CMD=up -d $(DC_SERVICE)
+up: dc
+
+## Stop service
+down:
+down: CMD=rm -f -s $(DC_SERVICE)
+down: dc
+
+## Build docker image
 build-docker:
-	@$(MAKE) -s dc CMD="build --no-cache --force-rm counter"
+	@$(MAKE) -s dc CMD="build --no-cache --force-rm $(DC_SERVICE)"
 
-test-docker: dc-test.out
-	diff -c t/$< $< || echo "Test completed"
+# Remove docker image & temp files
+clean-docker: clean-test-docker
+	[[ "$$($(DOCKER_BIN) images -q $(DC_IMAGE) 2> /dev/null)" == "" ]] || $(DOCKER_BIN) rmi $(DC_IMAGE)
 
-dc-test.out: t/dc-test.sh
+# Remove test temp files
+clean-test-docker:
+	[ -f test-docker.get ] && rm test-docker.get || true
+	[ -f test-docker.sh ] && rm test-docker.sh || true
+
+## Test project via docker
+test-docker: clean-test-docker test-docker.get
+	@diff -c t/$@.want $@.get && echo "Test completed successfully."
+
+# Run test bash script
+test-docker.get: test-docker.sh
 	bash $< > $@
 
-t/dc-test.sh: t/dc-test.sc
+# Generate test bash script from scenario
+test-docker.sh: t/test-docker.sc
 	@echo "# This file generated by make $@" > $@; \
   cat $< | \
   while read cmd; do  \
     if [[ "$$cmd" == "restart" ]] ; then \
-     echo $(MAKE) -s dc 'CMD="restart counter"' >> $@ ; \
+     echo $(MAKE) -s dc 'CMD="restart $(DC_SERVICE)"' >> $@ ; \
     elif [[ "$$cmd" == "kill" ]] ; then \
-     echo $(MAKE) -s dc 'CMD="kill counter"' >> $@ ; \
+     echo $(MAKE) -s dc 'CMD="kill $(DC_SERVICE)"' >> $@ ; \
     elif [[ "$$cmd" == "start" ]] ; then \
-     echo DB_FILE=/data.db $(MAKE) -s dc 'CMD="up -d counter"' >> $@ ; \
+     echo DB_FILE=/data.db $(MAKE) -s dc 'CMD="up -d $(DC_SERVICE)" 1>&2' >> $@ ; # this may out whole build process logs \
     elif [[ "$$cmd" == "stop" ]] ; then \
-     echo $(MAKE) -s dc 'CMD="rm -f -s counter"' >> $@ ; \
+     echo $(MAKE) -s dc 'CMD="rm -f -s $(DC_SERVICE)" 1>&2' >> $@ ; \
     else \
-     echo $(DOCKER_BIN) run --net $(PROJECT_NAME)_default --rm -i counter \
-      /client --connect counter:50051 --log_level warn --log_stdout $$cmd '2>&1' >> $@ ; \
+     echo $(DOCKER_BIN) run --net $(PROJECT_NAME)_default --rm -i $(DC_IMAGE) \
+      /client --connect $(DC_SERVICE):50051 --log_level warn --log_stdout $$cmd '2>&1' >> $@ ; \
     fi \
   done ;\
 
 # ------------------------------------------------------------------------------
-
 
 # $$PWD используется для того, чтобы текущий каталог был доступен в контейнере по тому же пути
 # и относительные тома новых контейнеров могли его использовать
@@ -152,7 +179,11 @@ dc: docker-compose.yml
   --env=golang_version=$(GO_VER) \
   --env=SERVER_PORT=$(SERVER_PORT) \
   --env=DB_FILE=$(DB_FILE) \
+  --env=DC_IMAGE=$(DC_IMAGE) \
   docker/compose:$(DC_VER) \
   -p $(PROJECT_NAME) \
   $(CMD)
 
+## Show available make targets
+help:
+	@grep -A 1 "^##" Makefile | less

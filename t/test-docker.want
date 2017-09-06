@@ -9,4 +9,3 @@ level=fatal msg="could not set settings: rpc error: code = InvalidArgument desc 
 {"number":1,"step":5,"limit":10}
 {"number":1,"step":5,"limit":10}
 {"number":6,"step":5,"limit":10}
-Going to remove exam_counter_1

@@ -3,13 +3,12 @@ package counter
 import (
 	"lekovr/exam/counter/setup"
 	"reflect"
-	"sync"
 	"testing"
 )
 
 func TestNewCounter(t *testing.T) {
 	type args struct {
-		s      setup.Settings
+		s      *setup.Settings
 		number int64
 	}
 	tests := []struct {
@@ -18,22 +17,28 @@ func TestNewCounter(t *testing.T) {
 		want    *Counter
 		wantErr bool
 	}{
-		// test cases
+		// Test cases.
 		{
-			name:    "new1",
-			args:    args{s: setup.Settings{Step: 1, Limit: 10}, number: 0},
-			want:    &Counter{settings: setup.Settings{Step: 1, Limit: 10}, number: 0},
+			name:    "start from 0",
+			args:    args{s: &setup.Settings{Step: 1, Limit: 10}, number: 0},
+			want:    &Counter{settings: &setup.Settings{Step: 1, Limit: 10}, number: 0},
 			wantErr: false,
 		},
 		{
-			name:    "new2",
-			args:    args{s: setup.Settings{Step: 2, Limit: 20}, number: 1},
-			want:    &Counter{settings: setup.Settings{Step: 2, Limit: 20}, number: 1},
+			name:    "start from 1",
+			args:    args{s: &setup.Settings{Step: 2, Limit: 20}, number: 1},
+			want:    &Counter{settings: &setup.Settings{Step: 2, Limit: 20}, number: 1},
 			wantErr: false,
 		},
 		{
-			name:    "new_limit_too_mutch_error",
-			args:    args{s: setup.Settings{Step: 20, Limit: 2}, number: 1},
+			name:    "error: Step must be less than limit",
+			args:    args{s: &setup.Settings{Step: 20, Limit: 2}, number: 1},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "error: Step must be positive",
+			args:    args{s: &setup.Settings{Step: -20, Limit: 2}, number: 1},
 			want:    nil,
 			wantErr: true,
 		},
@@ -53,7 +58,7 @@ func TestNewCounter(t *testing.T) {
 func TestCounter_GetNumber(t *testing.T) {
 	type fields struct {
 		number   int64
-		settings setup.Settings
+		settings *setup.Settings
 	}
 	tests := []struct {
 		name    string
@@ -61,33 +66,37 @@ func TestCounter_GetNumber(t *testing.T) {
 		want    int64
 		wantErr bool
 	}{
-		// test cases
+		// Test cases.
 		{
 			name:    "start from 1",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 10}, number: 1},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 10}, number: 1},
 			want:    1,
 			wantErr: false,
 		},
 		{
 			name:    "start from 2",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 10}, number: 2},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 10}, number: 2},
 			want:    2,
 			wantErr: false,
+		},
+		{
+			name:    "error: Constructor required",
+			fields:  fields{settings: nil, number: 1},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    sync.RWMutex{},
 		}
 		got, err := c.GetNumber()
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. Counter.GetNumber() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if got != tt.want {
-			t.Errorf("%q. Counter.GetNumber() = %v, want %v", tt.name, got, tt.want)
+		if err == nil && *got != tt.want {
+			t.Errorf("%q. Counter.GetNumber() = %v, want %v", tt.name, got, &tt.want)
 		}
 	}
 }
@@ -95,7 +104,7 @@ func TestCounter_GetNumber(t *testing.T) {
 func TestCounter_IncrementNumber(t *testing.T) {
 	type fields struct {
 		number   int64
-		settings setup.Settings
+		settings *setup.Settings
 	}
 	tests := []struct {
 		name    string
@@ -103,45 +112,49 @@ func TestCounter_IncrementNumber(t *testing.T) {
 		want    int64
 		wantErr bool
 	}{
-		// test cases
+		// Test cases.
 		{
 			name:    "new number less than limit",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 3}, number: 1},
 			want:    2,
 			wantErr: false,
 		},
 		{
 			name:    "new number eq limit-1",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 3}, number: 1},
 			want:    2,
 			wantErr: false,
 		},
 		{
 			name:    "new number eq limit",
-			fields:  fields{settings: setup.Settings{Step: 2, Limit: 3}, number: 1},
+			fields:  fields{settings: &setup.Settings{Step: 2, Limit: 3}, number: 1},
 			want:    0,
 			wantErr: false,
 		},
 		{
 			name:    "new greater than limit",
-			fields:  fields{settings: setup.Settings{Step: 3, Limit: 5}, number: 4},
+			fields:  fields{settings: &setup.Settings{Step: 3, Limit: 5}, number: 4},
 			want:    2,
 			wantErr: false,
+		},
+		{
+			name:    "error: constructor required",
+			fields:  fields{settings: nil, number: 1},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    sync.RWMutex{},
 		}
 		got, err := c.IncrementNumber()
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. Counter.IncrementNumber() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if got != tt.want {
-			t.Errorf("%q. Counter.IncrementNumber() = %v, want %v", tt.name, got, tt.want)
+		if err == nil && *got != tt.want {
+			t.Errorf("%q. Counter.IncrementNumber() = %v, want %v", tt.name, got, &tt.want)
 		}
 	}
 }
@@ -149,7 +162,7 @@ func TestCounter_IncrementNumber(t *testing.T) {
 func TestCounter_SetSettings(t *testing.T) {
 	type fields struct {
 		number   int64
-		settings setup.Settings
+		settings *setup.Settings
 	}
 	type args struct {
 		s setup.Settings
@@ -160,16 +173,16 @@ func TestCounter_SetSettings(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// test cases
+		// Test cases.
 		{
 			name:    "correct settings",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 3}, number: 1},
 			args:    args{s: setup.Settings{Step: 2, Limit: 20}},
 			wantErr: false,
 		},
 		{
-			name:    "incorrect settings",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 3}, number: 1},
+			name:    "error: Incorrect settings",
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 3}, number: 1},
 			args:    args{s: setup.Settings{Step: 20, Limit: 2}},
 			wantErr: true,
 		},
@@ -178,13 +191,12 @@ func TestCounter_SetSettings(t *testing.T) {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    sync.RWMutex{},
 		}
-		if err := c.SetSettings(tt.args.s); (err != nil) != tt.wantErr {
+		if err := c.SetSettings(&tt.args.s); (err != nil) != tt.wantErr {
 			t.Errorf("%q. Counter.SetSettings() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
-		if !tt.wantErr && !reflect.DeepEqual(c.settings, tt.args.s) {
-			t.Errorf("%q. Counter.SetSettings() = %v, want %v", tt.name, c.settings, tt.args.s)
+		if !tt.wantErr && !reflect.DeepEqual(c.settings, &tt.args.s) {
+			t.Errorf("%q. Counter.SetSettings() = %v, want %v", tt.name, c.settings, &tt.args.s)
 		}
 
 	}
@@ -193,33 +205,37 @@ func TestCounter_SetSettings(t *testing.T) {
 func TestCounter_GetSettings(t *testing.T) {
 	type fields struct {
 		number   int64
-		settings setup.Settings
+		settings *setup.Settings
 	}
 	tests := []struct {
 		name    string
 		fields  fields
-		want    setup.Settings
+		want    *setup.Settings
 		wantErr bool
 	}{
 		// test cases
 		{
 			name:    "simple",
-			fields:  fields{settings: setup.Settings{Step: 1, Limit: 10}, number: 1},
-			want:    setup.Settings{Step: 1, Limit: 10},
+			fields:  fields{settings: &setup.Settings{Step: 1, Limit: 10}, number: 1},
+			want:    &setup.Settings{Step: 1, Limit: 10},
 			wantErr: false,
 		},
 		{
 			name:    "not simple",
-			fields:  fields{settings: setup.Settings{Step: 2, Limit: 20}, number: 1},
-			want:    setup.Settings{Step: 2, Limit: 20},
+			fields:  fields{settings: &setup.Settings{Step: 2, Limit: 20}, number: 1},
+			want:    &setup.Settings{Step: 2, Limit: 20},
 			wantErr: false,
+		},
+		{
+			name:    "error: constructor required",
+			fields:  fields{settings: nil, number: 1},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		c := &Counter{
 			number:   tt.fields.number,
 			settings: tt.fields.settings,
-			mutex:    sync.RWMutex{},
 		}
 		got, err := c.GetSettings()
 		if (err != nil) != tt.wantErr {
@@ -234,7 +250,7 @@ func TestCounter_GetSettings(t *testing.T) {
 
 func Test_checkSettings(t *testing.T) {
 	type args struct {
-		s setup.Settings
+		s *setup.Settings
 	}
 	tests := []struct {
 		name    string
@@ -243,12 +259,12 @@ func Test_checkSettings(t *testing.T) {
 	}{
 		{
 			name:    "correct settings",
-			args:    args{s: setup.Settings{Step: 2, Limit: 20}},
+			args:    args{s: &setup.Settings{Step: 2, Limit: 20}},
 			wantErr: false,
 		},
 		{
 			name:    "incorrect settings",
-			args:    args{s: setup.Settings{Step: 20, Limit: 2}},
+			args:    args{s: &setup.Settings{Step: 20, Limit: 2}},
 			wantErr: true,
 		},
 	}

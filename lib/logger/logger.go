@@ -58,8 +58,7 @@ func NewLogger(cfg Config) (logger.Entry, error) {
 
 }
 
-// WithField вызывает одноименный родительский метод,
-// меняя тип результата на интерфейс
+// WithField call same name parent method and returns result as logger.Entry
 func (entry Log) WithField(key string, value interface{}) logger.Entry {
 	l := entry.Entry.WithField(key, value)
 	return &Log{l}

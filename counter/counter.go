@@ -5,6 +5,8 @@ Package counter contains counter logic.
 */
 package counter
 
+// TODO: go:generate mockgen -destination=../lib/mocks/counter.go -package=mocks lekovr/exam/counter Counter
+
 import (
 	"errors"
 	"sync"
@@ -15,12 +17,12 @@ import (
 // Counter holds object internals
 type Counter struct {
 	number   int64
-	settings setup.Settings
-	mutex    sync.RWMutex // not referense, so defined always
+	settings *setup.Settings // nil means NewCounter was not called
+	mutex    sync.RWMutex    // not referense, so defined always
 }
 
 // NewCounter creates a counter object
-func NewCounter(s setup.Settings, number int64) (*Counter, error) {
+func NewCounter(s *setup.Settings, number int64) (*Counter, error) {
 
 	if err := checkSettings(s); err != nil {
 		return nil, err
@@ -30,14 +32,17 @@ func NewCounter(s setup.Settings, number int64) (*Counter, error) {
 }
 
 // GetSettings returns current settings
-func (c *Counter) GetSettings() (setup.Settings, error) {
+func (c *Counter) GetSettings() (*setup.Settings, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
+	if c.settings == nil {
+		return nil, errors.New("NewCounter must be called before GetSettings")
+	}
 	return c.settings, nil
 }
 
 // SetSettings stores new settings
-func (c *Counter) SetSettings(s setup.Settings) error {
+func (c *Counter) SetSettings(s *setup.Settings) error {
 	if err := checkSettings(s); err != nil {
 		return err
 	}
@@ -48,17 +53,23 @@ func (c *Counter) SetSettings(s setup.Settings) error {
 }
 
 // GetNumber returns current counter number
-func (c *Counter) GetNumber() (int64, error) {
+func (c *Counter) GetNumber() (*int64, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
-	return c.number, nil
+	if c.settings == nil {
+		return nil, errors.New("NewCounter must be called before GetNumber")
+	}
+	return &c.number, nil
 }
 
 // IncrementNumber adds c.settings.Step to current counter number.
 // If new number >= c.settings.Limit, this limit deducted from number
-func (c *Counter) IncrementNumber() (int64, error) {
+func (c *Counter) IncrementNumber() (*int64, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+	if c.settings == nil {
+		return nil, errors.New("NewCounter must be called before IncrementNumber")
+	}
 
 	// number + step == limit ? number = 0
 	// number + step >  limit ?	number = number + step - limit = number - (limit - step)
@@ -70,12 +81,12 @@ func (c *Counter) IncrementNumber() (int64, error) {
 	} else {
 		c.number += c.settings.Step
 	}
-	return c.number, nil
+	return &c.number, nil
 }
 
 // checkSettings used internally for checking if settings correct
-// ie Step < Limit
-func checkSettings(s setup.Settings) (e error) {
+// ie Step < Limit and Step > 0
+func checkSettings(s *setup.Settings) (e error) {
 	if s.Step >= s.Limit {
 		e = errors.New("Step must be less than limit")
 	} else if s.Step <= 0 {
