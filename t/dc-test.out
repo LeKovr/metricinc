@@ -1,0 +1,12 @@
+{"number":0,"step":1,"limit":100}
+{"number":0,"step":3,"limit":10}
+{"number":3,"step":3,"limit":10}
+{"number":6,"step":3,"limit":10}
+{"number":6,"step":5,"limit":10}
+{"number":1,"step":5,"limit":10}
+level=fatal msg="could not set settings: rpc error: code = InvalidArgument desc = Step must be less than limit"
+level=fatal msg="could not set settings: rpc error: code = InvalidArgument desc = Step must be positive"
+{"number":1,"step":5,"limit":10}
+{"number":1,"step":5,"limit":10}
+{"number":6,"step":5,"limit":10}
+Going to remove exam_counter_1

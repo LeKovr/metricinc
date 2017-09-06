@@ -1,3 +1,6 @@
-cmd/client/client
-cmd/server/server
+client
+server
 coverage.out
+vendor
+t/dc-test.sh
+var

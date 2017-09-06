@@ -1,0 +1,32 @@
+package: lekovr/exam
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/boltdb/bolt
+- package: github.com/gogo/protobuf
+  subpackages:
+  - proto
+- package: github.com/golang/mock
+  subpackages:
+  - gomock
+- package: github.com/golang/protobuf
+  subpackages:
+  - ptypes/empty
+- package: github.com/jessevdk/go-flags
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  subpackages:
+  - codes
+ignore:
+- lekovr/exam/counter
+#  subpackages:
+#  - setup
+- lekovr/exam/lib/boltdb
+- lekovr/exam/lib/client
+- lekovr/exam/lib/grpcapi
+- lekovr/exam/lib/iface/kvstore
+- lekovr/exam/lib/iface/logger
+- lekovr/exam/lib/logger
+- lekovr/exam/lib/proto/counter
+- lekovr/exam/lib/mock_kvstore

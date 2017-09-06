@@ -1,3 +1,8 @@
+/*
+Package client is a simple connector to counter gRPC service
+
+
+*/
 package client
 
 import (
@@ -6,12 +11,14 @@ import (
 	pb "lekovr/exam/lib/proto/counter"
 )
 
+// Count holds gRPC connection & service
 type Count struct {
 	Service pb.CounterClient
 	conn    *grpc.ClientConn
 }
 
-func NewServer(address string) (*Count, error) {
+// NewClient creates a gRPC connection & service
+func NewClient(address string) (*Count, error) {
 
 	c := Count{}
 	// Set up a connection to the server.
@@ -20,12 +27,13 @@ func NewServer(address string) (*Count, error) {
 		return nil, err
 	}
 	c.conn = conn
+	// Attach service
 	c.Service = pb.NewCounterClient(conn)
 
 	return &c, nil
 }
 
+// Close client connection
 func (c *Count) Close() {
-
 	c.conn.Close()
 }

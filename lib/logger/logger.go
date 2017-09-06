@@ -32,7 +32,7 @@ type Log struct {
 // Config is a program flags group used in constructor
 type Config struct {
 	Level     string `long:"log_level" description:"Log level [warn|info|debug]" default:"debug"`
-	UseStdOut bool   `long:"log_stdout" description:"Log to STDOUT instead STDERR"`
+	UseStdOut bool   `long:"log_stdout" description:"Log to STDOUT without color and timestamps"`
 }
 
 // -----------------------------------------------------------------------------
@@ -47,7 +47,7 @@ func NewLogger(cfg Config) (logger.Entry, error) {
 	logDest.Level = level
 	if cfg.UseStdOut {
 		logDest.Out = os.Stdout
-		logDest.Formatter = &logrus.TextFormatter{DisableColors: true, DisableTimestamp: true} //true, TimestampFormat: "2006-01-02 15:04:05.000"}
+		logDest.Formatter = &logrus.TextFormatter{DisableColors: true, DisableTimestamp: true}
 	}
 	logEntry := logrus.NewEntry(logDest)
 

@@ -90,13 +90,25 @@ func TestNewAPI(t *testing.T) {
 
 func TestCounterService_Close(t *testing.T) {
 
+	var cfg struct {
+		Logger logger.Config `group:"Logging Options"`
+	}
+	cfg.Logger.Level = "error"
+	cfg.Logger.UseStdOut = true
+	log, _ := logger.NewLogger(cfg.Logger)
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	store := mock_kvstore.NewMockStore(ctrl)
+	sets := &setup.Settings{Step: 1, Limit: 10}
+
+	counter, _ := app.NewCounter(*sets, 0)
 
 	s := &CounterService{
-		store: store,
+		counter: counter,
+		store:   store,
+		log:     log,
 	}
 	store.EXPECT().Close()
 	s.Close()
