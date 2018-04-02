@@ -1,4 +1,4 @@
-package: lekovr/exam
+package:  github.com/LeKovr/metricinc
 import:
 - package: github.com/Sirupsen/logrus
 - package: github.com/boltdb/bolt
@@ -19,14 +19,12 @@ import:
   subpackages:
   - codes
 ignore:
-- lekovr/exam/counter
-#  subpackages:
-#  - setup
-- lekovr/exam/lib/boltdb
-- lekovr/exam/lib/client
-- lekovr/exam/lib/grpcapi
-- lekovr/exam/lib/iface/kvstore
-- lekovr/exam/lib/iface/logger
-- lekovr/exam/lib/logger
-- lekovr/exam/lib/proto/counter
-- lekovr/exam/lib/mocks
+-  github.com/LeKovr/metricinc/counter
+-  github.com/LeKovr/metricinc/lib/boltdb
+-  github.com/LeKovr/metricinc/lib/client
+-  github.com/LeKovr/metricinc/lib/grpcapi
+-  github.com/LeKovr/metricinc/lib/iface/kvstore
+-  github.com/LeKovr/metricinc/lib/iface/logger
+-  github.com/LeKovr/metricinc/lib/logger
+-  github.com/LeKovr/metricinc/lib/proto/counter
+-  github.com/LeKovr/metricinc/lib/mocks

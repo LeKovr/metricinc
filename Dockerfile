@@ -5,7 +5,7 @@ FROM golang:$golang_version
 
 MAINTAINER Alexey Kovrizhkin <lekovr+docker@gmail.com>
 
-WORKDIR /go/src/lekovr/exam
+WORKDIR /go/src/github.com/LeKovr/metricinc
 COPY cmd cmd
 COPY lib lib
 COPY counter counter
@@ -21,8 +21,8 @@ FROM scratch
 VOLUME /data
 
 WORKDIR /
-COPY --from=0 /go/src/lekovr/exam/client .
-COPY --from=0 /go/src/lekovr/exam/server .
+COPY --from=0 /go/src/github.com/LeKovr/metricinc/client .
+COPY --from=0 /go/src/github.com/LeKovr/metricinc/server .
 
 EXPOSE 50051
 CMD ["/server"]

@@ -13,9 +13,9 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/gogo/protobuf/proto"
-	"lekovr/exam/counter/setup"
-	"lekovr/exam/lib/iface/logger"
-	pb "lekovr/exam/lib/proto/counter"
+	"github.com/LeKovr/metricinc/counter/setup"
+	"github.com/LeKovr/metricinc/lib/iface/logger"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 // Config is a program flags group used in constructor

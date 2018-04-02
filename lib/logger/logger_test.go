@@ -1,7 +1,7 @@
 package logger_test
 
 import (
-	"lekovr/exam/lib/logger"
+	"github.com/LeKovr/metricinc/lib/logger"
 	"testing"
 )
 

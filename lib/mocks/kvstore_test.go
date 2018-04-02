@@ -4,7 +4,7 @@
 package mocks
 
 import (
-	setup "lekovr/exam/counter/setup"
+	setup "github.com/LeKovr/metricinc/counter/setup"
 	reflect "reflect"
 	"testing"
 

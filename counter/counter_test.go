@@ -1,7 +1,7 @@
 package counter
 
 import (
-	"lekovr/exam/counter/setup"
+	"github.com/LeKovr/metricinc/counter/setup"
 	"reflect"
 	"testing"
 )

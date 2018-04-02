@@ -13,12 +13,12 @@ import (
 	"github.com/jessevdk/go-flags"
 	"google.golang.org/grpc"
 
-	"lekovr/exam/lib/boltdb"
-	"lekovr/exam/lib/grpcapi"
-	"lekovr/exam/lib/logger"
-	pb "lekovr/exam/lib/proto/counter"
+	"github.com/LeKovr/metricinc/lib/boltdb"
+	"github.com/LeKovr/metricinc/lib/grpcapi"
+	"github.com/LeKovr/metricinc/lib/logger"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 
-	logiface "lekovr/exam/lib/iface/logger"
+	logiface "github.com/LeKovr/metricinc/lib/iface/logger"
 )
 
 // Config holds program options

@@ -14,10 +14,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"lekovr/exam/lib/client"
-	ilogger "lekovr/exam/lib/iface/logger"
-	"lekovr/exam/lib/logger"
-	pb "lekovr/exam/lib/proto/counter"
+	"github.com/LeKovr/metricinc/lib/client"
+	ilogger "github.com/LeKovr/metricinc/lib/iface/logger"
+	"github.com/LeKovr/metricinc/lib/logger"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 // GetCommand holds 'get' command definition

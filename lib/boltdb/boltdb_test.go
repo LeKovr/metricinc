@@ -4,8 +4,8 @@
 package boltdb
 
 import (
-	"lekovr/exam/counter/setup"
-	"lekovr/exam/lib/iface/logger"
+	"github.com/LeKovr/metricinc/counter/setup"
+	"github.com/LeKovr/metricinc/lib/iface/logger"
 	"reflect"
 	"testing"
 

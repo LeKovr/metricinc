@@ -9,11 +9,11 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 
-	app "lekovr/exam/counter"
-	"lekovr/exam/counter/setup"
-	"lekovr/exam/lib/logger"
-	"lekovr/exam/lib/mocks"
-	pb "lekovr/exam/lib/proto/counter"
+	app "github.com/LeKovr/metricinc/counter"
+	"github.com/LeKovr/metricinc/counter/setup"
+	"github.com/LeKovr/metricinc/lib/logger"
+	"github.com/LeKovr/metricinc/lib/mocks"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 /*

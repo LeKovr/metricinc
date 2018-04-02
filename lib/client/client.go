@@ -7,7 +7,7 @@ package client
 import (
 	"google.golang.org/grpc"
 
-	pb "lekovr/exam/lib/proto/counter"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 // Count holds gRPC connection & service

@@ -21,7 +21,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"os"
 
-	"lekovr/exam/lib/iface/logger"
+	"github.com/LeKovr/metricinc/lib/iface/logger"
 )
 
 // Log is a copy of logrus.Entry

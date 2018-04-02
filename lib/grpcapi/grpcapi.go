@@ -6,11 +6,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	app "lekovr/exam/counter"
-	"lekovr/exam/counter/setup"
-	"lekovr/exam/lib/iface/kvstore"
-	"lekovr/exam/lib/iface/logger"
-	pb "lekovr/exam/lib/proto/counter"
+	app "github.com/LeKovr/metricinc/counter"
+	"github.com/LeKovr/metricinc/counter/setup"
+	"github.com/LeKovr/metricinc/lib/iface/kvstore"
+	"github.com/LeKovr/metricinc/lib/iface/logger"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 // Config is a program flags group used in constructor

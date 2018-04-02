@@ -10,11 +10,11 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"lekovr/exam/counter/setup"
-	"lekovr/exam/lib/grpcapi"
-	"lekovr/exam/lib/logger"
-	"lekovr/exam/lib/mocks"
-	pb "lekovr/exam/lib/proto/counter"
+	"github.com/LeKovr/metricinc/counter/setup"
+	"github.com/LeKovr/metricinc/lib/grpcapi"
+	"github.com/LeKovr/metricinc/lib/logger"
+	"github.com/LeKovr/metricinc/lib/mocks"
+	pb "github.com/LeKovr/metricinc/lib/proto/counter"
 )
 
 func TestNewClient(t *testing.T) {

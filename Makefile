@@ -27,7 +27,7 @@ DC_IMAGE      ?= counter
 DC_VER        ?= 1.14.0
 
 # golang image version
-GO_VER        ?= latest
+GO_VER        ?= 1.10.1
 
 # docker app for change inside containers
 DOCKER_BIN    ?= docker
@@ -57,7 +57,7 @@ gen:
 	$(GO) generate ./lib/proto/... ./lib/iface/kvstore/...
 
 doc:
-	@echo "Open http://localhost:6060/pkg/lekovr/exam"
+	@echo "Open http://localhost:6060/pkg/github.com/LeKovr/metricinc"
 	@godoc -http=:6060
 
 ## Build cmds for scratch docker
@@ -81,7 +81,7 @@ server: cmd/server/*.go $(SOURCES)
 
 ## Show coverage
 coverage:
-	@for f in $(LIBS) ; do pushd ../../$$f > /dev/null ; $(GO) test -coverprofile=coverage.out ; popd > /dev/null ; done
+	@for f in $(LIBS) ; do pushd ../../../$$f > /dev/null ; $(GO) test -coverprofile=coverage.out ; popd > /dev/null ; done
 
 ## Show package coverage in html (make cov-html PKG=counter)
 cov-html:

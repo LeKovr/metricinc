@@ -5,13 +5,13 @@ Package counter contains counter logic.
 */
 package counter
 
-// TODO: go:generate mockgen -destination=../lib/mocks/counter.go -package=mocks lekovr/exam/counter Counter
+// TODO: go:generate mockgen -destination=../lib/mocks/counter.go -package=mocks github.com/LeKovr/metricinc/counter Counter
 
 import (
 	"errors"
 	"sync"
 
-	"lekovr/exam/counter/setup"
+	"github.com/LeKovr/metricinc/counter/setup"
 )
 
 // Counter holds object internals
